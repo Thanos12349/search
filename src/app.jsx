@@ -6,6 +6,7 @@ import {
   FrequentlyBoughtTogether,
   TrendingItems,
 } from 'react-instantsearch';
+import { ApiMessenger } from './components/apiMessenger';
 import './app.css';
 
 const HITS_PER_PAGE = 8;
@@ -214,7 +215,12 @@ function getPriceInfo(hit) {
     getValue(hit, ['special_price', 'Special Price', 'sale_price', 'Sale Price'])
   );
 
-  if (!Number.isNaN(specialPrice) && !Number.isNaN(price) && specialPrice < price) {
+  if (
+    !Number.isNaN(specialPrice) &&
+    !Number.isNaN(price) &&
+    specialPrice > 0 &&
+    specialPrice < price
+  ) {
     return { current: specialPrice, original: price };
   }
 
@@ -830,81 +836,89 @@ export default function App() {
   }, []);
 
   return (
-    <main className="search-page">
-      <section className="search-panel">
-        <div id="searchbox" />
+    <>
+      <main className="search-page">
 
-        <div
-          className="search-panel__results"
-          style={{ display: isSearchActive ? undefined : 'none' }}
-        >
-          <div className="search-layout">
-            <aside id="keywords-panel" className="keywords-panel" />
+        <section className="search-panel">
+          <div className="search-bar-row">
 
-            <div className="results-panel">
-              {!hasQuery && recommendClient && indexName && (
+            <div id="searchbox" />
+            <ApiMessenger />
+
+          </div>
+
+          <div
+            className="search-panel__results"
+            style={{ display: isSearchActive ? undefined : 'none' }}
+          >
+            <div className="search-layout">
+              <aside id="keywords-panel" className="keywords-panel" />
+
+              <div className="results-panel">
+                {!hasQuery && recommendClient && indexName && (
+                  <InstantSearch
+                    searchClient={recommendClient}
+                    indexName={indexName}
+                    insights={true}
+                  >
+                    <TrendingItems
+                      limit={HITS_PER_PAGE}
+                      headerComponent={CarouselHeader}
+                      itemComponent={RecommendProductCard}
+                      translations={{ title: 'Trending Now' }}
+                    />
+                  </InstantSearch>
+                )}
+                <div id="hits" style={{ display: hasQuery ? undefined : 'none' }} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {selectedProduct && (
+          <div
+            className="product-modal-overlay"
+            onClick={() => setSelectedProduct(null)}
+          >
+            <div className="product-modal" onClick={(event) => event.stopPropagation()}>
+              <button
+                type="button"
+                className="product-modal__close"
+                aria-label="Close"
+                onClick={() => setSelectedProduct(null)}
+              >
+                &times;
+              </button>
+
+              <MainProductView item={selectedProduct} />
+
+              {recommendClient && indexName && (
                 <InstantSearch
                   searchClient={recommendClient}
                   indexName={indexName}
                   insights={true}
                 >
-                  <TrendingItems
-                    limit={HITS_PER_PAGE}
+                  <LookingSimilar
+                    objectIDs={[selectedProduct.objectID]}
+                    limit={4}
                     headerComponent={CarouselHeader}
                     itemComponent={RecommendProductCard}
-                    translations={{ title: 'Trending Now' }}
+                    translations={{ title: 'Looking Similar' }}
+                  />
+                  <FrequentlyBoughtTogether
+                    objectIDs={[selectedProduct.objectID]}
+                    limit={4}
+                    headerComponent={CarouselHeader}
+                    itemComponent={RecommendProductCard}
+                    translations={{ title: 'Frequently Bought Together' }}
                   />
                 </InstantSearch>
               )}
-              <div id="hits" style={{ display: hasQuery ? undefined : 'none' }} />
             </div>
           </div>
-        </div>
-      </section>
-
-      {selectedProduct && (
-        <div
-          className="product-modal-overlay"
-          onClick={() => setSelectedProduct(null)}
-        >
-          <div className="product-modal" onClick={(event) => event.stopPropagation()}>
-            <button
-              type="button"
-              className="product-modal__close"
-              aria-label="Close"
-              onClick={() => setSelectedProduct(null)}
-            >
-              &times;
-            </button>
-
-            <MainProductView item={selectedProduct} />
-
-            {recommendClient && indexName && (
-              <InstantSearch
-                searchClient={recommendClient}
-                indexName={indexName}
-                insights={true}
-              >
-                <LookingSimilar
-                  objectIDs={[selectedProduct.objectID]}
-                  limit={4}
-                  headerComponent={CarouselHeader}
-                  itemComponent={RecommendProductCard}
-                  translations={{ title: 'Looking Similar' }}
-                />
-                <FrequentlyBoughtTogether
-                  objectIDs={[selectedProduct.objectID]}
-                  limit={4}
-                  headerComponent={CarouselHeader}
-                  itemComponent={RecommendProductCard}
-                  translations={{ title: 'Frequently Bought Together' }}
-                />
-              </InstantSearch>
-            )}
-          </div>
-        </div>
-      )}
-    </main>
+        )}
+      </main>
+    </>
   );
 }
 const container = document.getElementById('root');

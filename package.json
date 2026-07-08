@@ -10,13 +10,29 @@
     "lint:fix": "eslint . --fix && prettier --write ."
   },
   "devDependencies": {
+    "assert": "^2.1.0",
+    "browserify-zlib": "^0.2.0",
+    "buffer": "^6.0.3",
     "eslint": "8.15.0",
     "eslint-plugin-react": "^7.37.5",
+    "events": "^3.3.0",
+    "https-browserify": "^1.0.0",
     "parcel": "2.16.4",
-    "prettier": "2.6.2"
+    "prettier": "2.6.2",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "url": "^0.11.4",
+    "util": "^0.12.5"
   },
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "not dead"
+  ],
   "dependencies": {
     "algoliasearch": "^5.55.2",
+    "instantsearch.css": "^8.18.0",
     "instantsearch.js": "4.104.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
