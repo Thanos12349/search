@@ -7,7 +7,7 @@
 
 .search-page {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 24px 16px 64px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -31,7 +31,7 @@
 }
 
 #searchbox {
-  width: 800px;
+  width: 600px;
   max-width: 100%;
   margin: 0 auto;
 }
@@ -80,6 +80,77 @@
   background: #fff;
 }
 
+/* ---- "Shop by Brand" section, below Trending Items: 2 tiles per row,
+   6 brands total (3 rows). ---- */
+.brands-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.brands-section__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2430;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 0 0 12px;
+}
+
+.brands-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.brand-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* border: 1px solid #e5e7eb; */
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.brand-tile:hover {
+  border-color: #4b6bfb;
+  box-shadow: 0 6px 18px rgba(20, 24, 34, 0.08);
+  transform: translateY(-1px);
+}
+
+.brand-tile__logo,
+.brand-tile__logo-img {
+  flex: 0 0 44px;
+  width: 84px;
+  height: 44px;
+  border-radius: 8px;
+}
+
+.brand-tile__logo--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f8fa;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.brand-tile__logo-img {
+  object-fit: contain;
+  background: #fff;
+}
+
+.brand-tile__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2430;
+}
+
 /* ---- Left (20%) keywords panel + right (80%) stacked product sections ---- */
 .search-layout {
   display: flex;
@@ -88,8 +159,8 @@
 }
 
 .keywords-panel {
-  flex: 0 0 20%;
-  max-width: 20%;
+  flex: 0 0 28%;
+  max-width: 28%;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: #fff;
@@ -105,6 +176,16 @@
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 10px;
+}
+
+.keywords-panel__sectionsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.keywords-panel__section {
+  min-width: 0;
 }
 
 .keywords-panel__list {
@@ -143,6 +224,7 @@
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
   overflow-wrap: anywhere;
+z-index: 9;
 }
 
 .keyword-chip:hover {
@@ -196,48 +278,15 @@
   background: #f0973b;
 }
 
-/* Each card sits in a single horizontally scrolling row instead of
-   wrapping into a grid - scrolling a row near its right edge fetches
-   the next page (see handleRowScroll in app.jsx), replacing the old
-   "Load more" button. */
 .search-cards-row {
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
   align-items: stretch;
-  gap: 20px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 12px;
-  scroll-behavior: smooth;
-  scrollbar-width: thin;
-  scrollbar-color: #4b6bfb #eef0f3;
 }
 
-.search-cards-row::-webkit-scrollbar {
-  height: 10px;
-}
-
-.search-cards-row::-webkit-scrollbar-track {
-  background: #eef0f3;
-  border-radius: 10px;
-}
-
-.search-cards-row::-webkit-scrollbar-thumb {
-  background: #4b6bfb;
-  border-radius: 10px;
-}
-
-.search-cards-row::-webkit-scrollbar-thumb:hover {
-  background: #3a54d6;
-}
-
-/* Card width is derived from the row's own width so exactly N cards
-   are visible at a time per breakpoint (4 laptop/desktop, 3 tablet,
-   2 mobile) - any remaining cards sit off to the right and are
-   reached by scrolling, rather than shrinking to fit. */
 .search-cards-row .search-card {
-  flex: 0 0 calc((100% - 3 * 20px) / 4);
-  width: calc((100% - 3 * 20px) / 4);
+  width: 100%;
 }
 
 .search-empty-cell {
@@ -247,11 +296,11 @@
   flex: 1 1 auto;
   width: 100%;
   min-height: 60px;
-  padding: 18px;
+  padding: 8px;
   border: 1px dashed #d7dbe0;
   border-radius: 10px;
   color: #9aa1ac;
-  font-size: 14px;
+  font-size: 12px;
   font-style: italic;
 }
 
@@ -286,21 +335,26 @@
 }
 
 .search-card {
-  min-width: 0;
+  min-width: 190px;
   display: flex;
   flex-direction: column;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   overflow: hidden;
-  text-decoration: none;
   color: inherit;
   background: #fff;
+  cursor: pointer;
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .search-card:hover {
   box-shadow: 0 6px 18px rgba(20, 24, 34, 0.08);
   transform: translateY(-2px);
+}
+
+.search-card:focus-visible {
+  outline: 2px solid #4b6bfb;
+  outline-offset: 2px;
 }
 
 .search-card__imageBox {
@@ -314,6 +368,7 @@
 }
 
 .search-card__image {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -379,6 +434,32 @@
   width: fit-content;
 }
 
+.search-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.search-card__viewProduct {
+  border: 1px solid #d7dbe0;
+  background: #fff;
+  color: #1f2430;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.search-card__viewProduct:hover {
+  background: #f3f5ff;
+  border-color: #4b6bfb;
+  transform: translateY(-1px);
+}
+
 .search-card__stock.is-in-stock { background: #e6f6ea; color: #1c8a3d; }
 .search-card__stock.is-low-stock { background: #fff4d6; color: #a66a00; }
 .search-card__stock.is-call-for-stock { background: #eef0f3; color: #6b7280; }
@@ -392,6 +473,104 @@
 }
 
 /* ---- Responsive: any screen size ---- */
+
+@media (max-width: 1024px) {
+  .search-cards-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .keywords-panel{
+    padding: 0;
+  }
+  .keywords-panel__sectionsRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-items: start;
+  }
+
+  .keywords-panel__section {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .keywords-panel__title,
+  .brands-section__title {
+    margin: 0 0 10px;
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .keywords-panel__section--trending .keywords-panel__list {
+    grid-template-columns: 1fr;
+  }
+
+  .keywords-panel__section--trending .keyword-chip {
+    font-size: 8px;
+    padding: 5px 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .keywords-panel__section--brands .brands-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .keywords-panel__section--brands .brands-section {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .search-cards-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .search-cards-row {
+    padding-bottom: 0;
+  }
+
+  .search-card {
+    min-width: 0;
+  }
+
+  .search-card__body {
+    padding: 8px 10px 10px;
+    gap: 3px;
+  }
+
+  .search-card__name {
+    font-size: 13px;
+  }
+
+  .search-card__price {
+    font-size: 14px;
+  }
+
+  .search-card__stock {
+    font-size: 10px;
+  }
+
+  .search-card__imageBox {
+    aspect-ratio: 16 / 10;
+  }
+
+  .brands-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
 @media (max-width: 900px) {
   #searchbox {
     width: 100%;
@@ -416,51 +595,19 @@
     width: auto;
   }
 
+  .brands-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .results-panel {
     flex: 1 1 auto;
   }
 }
 
-@media (max-width: 1024px) {
-  /* Tablet: 3 cards visible at a time. */
-  .search-cards-row .search-card {
-    flex-basis: calc((100% - 2 * 20px) / 3);
-    width: calc((100% - 2 * 20px) / 3);
-  }
-}
-
-@media (max-width: 640px) {
-  .search-cards-row {
-    gap: 14px;
-  }
-
-  /* Mobile: 2 cards visible at a time. */
-  .search-cards-row .search-card {
-    flex-basis: calc((100% - 14px) / 2);
-    width: calc((100% - 14px) / 2);
-  }
-
-  .search-card__body {
-    padding: 8px 10px 10px;
-    gap: 3px;
-  }
-
-  .search-card__name {
-    font-size: 13px;
-  }
-
-  .search-card__price {
-    font-size: 14px;
-  }
-
-  .search-card__stock {
-    font-size: 10px;
-  }
-}
 
 @media (max-width: 420px) {
   .search-card__imageBox {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 20/8;
   }
 }
 
@@ -533,6 +680,21 @@
   margin: 0;
 }
 
+.product-modal__sectionTitle {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2430;
+}
+
+.product-modal__description p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #4b5563;
+  white-space: pre-line;
+}
+
 .product-modal__link {
   margin-top: auto;
   align-self: flex-start;
@@ -557,7 +719,9 @@
   border-top: 1px solid #e5e7eb;
 }
 
-.ais-LookingSimilar-list {
+.ais-TrendingItems-list,
+.ais-LookingSimilar-list,
+.ais-FrequentlyBoughtTogether-list {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
@@ -576,11 +740,13 @@
 }
 
 .productImage {
+  display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: contain;
   background: #f7f8fa;
   border-radius: 6px;
+  min-height: 120px;
 }
 
 .productImage--empty {
@@ -602,6 +768,10 @@
 }
 
 @media (max-width: 640px) {
+  .brand-tile__logo-img{
+    width:44;
+    height:20px;
+  }
   .product-modal__main {
     flex-direction: column;
   }
@@ -610,7 +780,9 @@
     width: 100%;
   }
 
-  .ais-LookingSimilar-list {
+  .ais-TrendingItems-list,
+  .ais-LookingSimilar-list,
+  .ais-FrequentlyBoughtTogether-list {
     grid-template-columns: repeat(2, 1fr);
   }
 }

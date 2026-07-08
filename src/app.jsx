@@ -8,10 +8,29 @@ import {
 } from 'react-instantsearch';
 import './app.css';
 
-const growthIconUrl = new URL('./images/growth.png', import.meta.url).href;
-
 const HITS_PER_PAGE = 8;
+const growthIcon = new URL('./images/growth.png', import.meta.url).href
+const blizLogo = new URL('./images/blizLogo.png', import.meta.url).href
+const bonvueLogo = new URL('./images/bonvue_logo.png', import.meta.url).href
+const fedLogo = new URL('./images/fed_logo.png', import.meta.url).href
+const gasLogo = new URL('./images/gasLogo.png', import.meta.url).href
+const modLogo = new URL('./images/modLogo.png', import.meta.url).href
+const thermasterLogo = new URL('./images/thermaster_logo.png', import.meta.url).href
+
+const HITS_FETCH_MULTIPLIER = 3; // fetch extra so both New + Refurbished sections can each show a full 8
 const POPULAR_SEARCH_LIMIT = 8;
+const BRAND_LINKS = [
+  { name: 'Thermaster', url: 'https://www.foodequipment.com.au/thermaster', logo: thermasterLogo },
+  { name: 'FED-X', url: 'https://www.foodequipment.com.au/fed-x', logo: fedLogo },
+  { name: 'Gasmax', url: 'https://www.foodequipment.com.au/gasmax', logo: gasLogo },
+  { name: 'Modular Systems', url: 'https://www.foodequipment.com.au/modular-systems', logo: modLogo },
+  { name: 'Bonvue', url: 'https://www.foodequipment.com.au/bonvue', logo: bonvueLogo },
+  {
+    name: 'Blizzard Ice Systems',
+    url: 'https://www.foodequipment.com.au/blizzard-ice-systems',
+    logo: blizLogo
+  },
+];
 const QUERY_SUGGESTIONS_INDEX_NAME =
   process.env.ALGOLIA_QUERY_SUGGESTIONS_INDEX_NAME ||
   `${process.env.ALGOLIA_INDEX_NAME || ''}_query_suggestions`;
@@ -202,6 +221,29 @@ function getPriceInfo(hit) {
   return { current: Number.isNaN(price) ? null : price, original: null };
 }
 
+function getProductDescription(hit) {
+  const description = getValue(hit, [
+    'description',
+    'Description',
+    'short_description',
+    'Short Description',
+    'shortDescription',
+    'long_description',
+    'Long Description',
+    'longDescription',
+    'product_description',
+    'Product Description',
+    'productDescription',
+    'full_description',
+    'Full Description',
+    'fullDescription',
+    'details',
+    'Details',
+  ]);
+
+  return description ? stripHtml(description) : '';
+}
+
 function isRefurbishedProduct(hit) {
   const exactGroup = String(
     getValue(hit, ['condition_group', 'conditionGroup'], '')
@@ -289,6 +331,7 @@ function MainProductView({ item }) {
   const priceInfo = getPriceInfo(item);
   const productUrl = getProductUrl(item);
   const stock = getStockStatus(item);
+  const description = getProductDescription(item);
 
   return (
     <div className="product-modal__main">
@@ -306,6 +349,10 @@ function MainProductView({ item }) {
           <PriceDisplay priceInfo={priceInfo} />
         </div>
         <div className={`search-card__stock ${stock.className}`}>{stock.label}</div>
+        <div className="product-modal__description">
+          <h3 className="product-modal__sectionTitle">Description</h3>
+          <p>{description || 'No description available.'}</p>
+        </div>
         <a className="product-modal__link" href={productUrl} target="_blank" rel="noreferrer">
           View full details
         </a>
@@ -361,7 +408,6 @@ export default function App() {
     function renderProductCard(hit) {
       const imageUrl = getValue(hit, PRODUCT_IMAGE_KEYS);
       const productUrl = getProductUrl(hit);
-
       const sku = getValue(hit, ['sku', 'SKU', 'Sku']);
       const name = getHighlightedValue(
         hit,
@@ -384,7 +430,13 @@ export default function App() {
       const stock = getStockStatus(hit);
 
       return `
-        <a class="search-card" href="${escapeHtml(productUrl)}" data-object-id="${escapeHtml(hit.objectID)}">
+        <div
+          class="search-card"
+          role="link"
+          tabindex="0"
+          data-object-id="${escapeHtml(hit.objectID)}"
+          data-product-url="${escapeHtml(productUrl)}"
+        >
           <div class="search-card__imageBox">
             ${
               imageUrl
@@ -414,11 +466,20 @@ export default function App() {
 
             <div class="search-card__price">${price}</div>
 
-            <div class="search-card__stock ${stock.className}">
-              ${stock.label}
+            <div class="search-card__actions">
+              <div class="search-card__stock ${stock.className}">
+                ${stock.label}
+              </div>
+              <button
+                type="button"
+                class="search-card__viewProduct"
+                data-object-id="${escapeHtml(hit.objectID)}"
+              >
+                View Product
+              </button>
             </div>
           </div>
-        </a>
+        </div>
       `;
     }
 
@@ -427,7 +488,12 @@ export default function App() {
         return `<div class="search-empty-cell">Not found</div>`;
       }
 
-      return `<div class="search-cards-row">${products.map(renderProductCard).join('')}</div>`;
+      // Show 8 cards per section in a fixed 4x2 grid instead of a
+      // horizontal scroller.
+      return `<div class="search-cards-row">${products
+        .slice(0, HITS_PER_PAGE)
+        .map(renderProductCard)
+        .join('')}</div>`;
     }
     let keywordsPanelRequestId = 0;
 
@@ -473,50 +539,100 @@ export default function App() {
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
+    function renderBrandSection() {
+      return `
+        <div class="brands-section">
+          <div class="brands-section__title">Recommended Brands</div>
+          <div class="brands-grid">
+            ${BRAND_LINKS.map((brand) => `
+                <a
+                  class="brand-tile"
+                  href="${escapeHtml(brand.url)}"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="${escapeHtml(brand.name)}"
+                >
+                  <img
+                    class="brand-tile__logo-img"
+                    src="${escapeHtml(brand.logo)}"
+                    alt="${escapeHtml(brand.name)} logo"
+                    loading="lazy"
+                  />
+                </a>
+              `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // Matches the "Trending searches" pill design: bold heading with a
+    // trending-up arrow, and a two-column grid of rounded pill buttons
+    // each prefixed with a small search icon. Styled inline so it renders
+    // correctly regardless of what's (or isn't) in app.css.
     async function renderKeywordsPanel() {
       const panel = document.getElementById('keywords-panel');
       if (!panel) return;
 
       const requestId = ++keywordsPanelRequestId;
       panel.innerHTML = `
-        <div class="keywords-panel__title">Popular Searches</div>
-        <div class="keywords-panel__empty">Loading…</div>
+        <div class="keywords-panel__sectionsRow">
+          <section class="keywords-panel__section keywords-panel__section--trending">
+            <div class="keywords-panel__title" style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;color:#111827;margin-bottom:14px;">
+              <img src="${growthIcon}" alt="Trending" style="width:20px;height:20px;flex-shrink:0;" />
+              <div class="brands-section__title">Trending searches</div>
+            </div>
+            <div class="keywords-panel__empty">Loading…</div>
+          </section>
+          <section class="keywords-panel__section keywords-panel__section--brands">
+            ${renderBrandSection()}
+          </section>
+        </div>
       `;
 
       const keywords = await fetchPopularSearches();
       if (requestId !== keywordsPanelRequestId) return;
 
       panel.innerHTML = `
-        <div class="keywords-panel__title">Popular Searches</div>
-        ${
-          keywords.length
-            ? `
-              <ul class="keywords-panel__list">
-                ${keywords
-                  .map(
-                    (keyword) => `
-                     <li class="keywords-panel__item">
-                      <img
-                        src="${growthIconUrl}"
-                        class="keywords-panel__icon"
-                        alt="growth icon"
-                      />
-
-                      <button
-                        type="button"
-                        class="keyword-chip"
-                        data-keyword="${escapeHtml(keyword)}"
-                      >
-                        ${escapeHtml(keyword)}
-                      </button>
-                    </li>
-                    `
-                  )
-                  .join('')}
-              </ul>
-            `
-            : `<div class="keywords-panel__empty">No popular searches yet</div>`
-        }
+        <div class="keywords-panel__sectionsRow">
+          <section class="keywords-panel__section keywords-panel__section--trending">
+            <div class="keywords-panel__title" style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;color:#111827;margin-bottom:14px;">
+              <img src="${growthIcon}" alt="Trending" style="width:20px;height:20px;flex-shrink:0;" />
+               <div class="brands-section__title">Trending searches</div>
+            </div>
+            ${
+              keywords.length
+                ? `
+                  <ul class="keywords-panel__list" style="list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0;padding:0;">
+                    ${keywords
+                      .map(
+                        (keyword) => `
+                         <li class="keywords-panel__item">
+                          <button
+                            type="button"
+                            class="keyword-chip"
+                            data-keyword="${escapeHtml(keyword)}"
+                            style="display:flex;align-items:center;width:100%;border-radius:45px;border:1px solid #e5e7eb;background:#fafafa;font-size:12px;line-height:1.2;color:#374151;cursor:pointer;text-align:left;"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px; color:#9ca3af;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <span>${escapeHtml(keyword)}</span>
+                          </button>
+                        </li>
+                        `
+                      )
+                      .join('')}
+                  </ul>
+                `
+                : `<div class="keywords-panel__empty">No popular searches yet${
+                    QUERY_SUGGESTIONS_INDEX_NAME
+                      ? ` (index: ${escapeHtml(QUERY_SUGGESTIONS_INDEX_NAME)})`
+                      : ''
+                  }</div>`
+            }
+          </section>
+          <section class="keywords-panel__section keywords-panel__section--brands">
+            ${renderBrandSection()}
+          </section>
+        </div>
       `;
 
       panel.querySelectorAll('[data-keyword]').forEach((btn) => {
@@ -525,33 +641,11 @@ export default function App() {
     }
     const hitsById = new Map();
     let sendHitEvent = () => {};
-    let loadMoreHits = () => {};
-    let atLastPage = true;
-    let isLoadingMore = false;
 
-    const SCROLL_LOAD_MORE_THRESHOLD_PX = 120;
-
-    function handleRowScroll(event) {
-      const row = event.currentTarget;
-      const distanceFromEnd = row.scrollWidth - row.scrollLeft - row.clientWidth;
-
-      if (
-        distanceFromEnd <= SCROLL_LOAD_MORE_THRESHOLD_PX &&
-        !atLastPage &&
-        !isLoadingMore
-      ) {
-        isLoadingMore = true;
-        loadMoreHits();
-      }
-    }
     const renderGroupedHits = (renderOptions) => {
-      const { hits, results, widgetParams, sendEvent, showMore, isLastPage } =
-        renderOptions;
+      const { hits, results, widgetParams, sendEvent } = renderOptions;
 
       sendHitEvent = sendEvent;
-      loadMoreHits = showMore;
-      atLastPage = isLastPage;
-      isLoadingMore = false;
 
       const container = document.querySelector(widgetParams.container);
       if (!container) return;
@@ -592,20 +686,15 @@ export default function App() {
         </div>
 
         <div class="product-section product-section--refurbished">
-          <div class="product-section__title">Refurbished Products</div>
+          <div class="product-section__title">2nDs/Ex-showroom</div>
           <div id="ref-products-cell">
             ${renderCardsGrid(refurbishedProducts)}
           </div>
         </div>
       `;
-
-      container.querySelectorAll('.search-cards-row').forEach((row) => {
-        row.addEventListener('scroll', handleRowScroll);
-      });
     };
 
-    const groupedHits =
-      instantsearch.connectors.connectInfiniteHits(renderGroupedHits);
+    const groupedHits = instantsearch.connectors.connectHits(renderGroupedHits);
 
     search.addWidgets([
       instantsearch.widgets.searchBox({
@@ -620,7 +709,11 @@ export default function App() {
       }),
 
       instantsearch.widgets.configure({
-        hitsPerPage: HITS_PER_PAGE,
+        // Fetch more than HITS_PER_PAGE so that after splitting into
+        // New/Refurbished, each section can still independently fill up
+        // to a full 8 cards - a plain hitsPerPage: 8 would often leave
+        // one section short once split.
+        hitsPerPage: HITS_PER_PAGE * HITS_FETCH_MULTIPLIER,
         attributesToHighlight: [
           'name',
           'Name',
@@ -658,6 +751,17 @@ export default function App() {
     const hitsContainerEl = document.getElementById('hits');
 
     function handleCardClick(event) {
+      const viewButton = event.target.closest('.search-card__viewProduct');
+      if (viewButton && hitsContainerEl?.contains(viewButton)) {
+        const hit = hitsById.get(viewButton.dataset.objectId);
+        if (!hit) return;
+        sendHitEvent('click', hit, 'View Product Clicked');
+        event.preventDefault();
+        event.stopPropagation();
+        setSelectedProduct(hit);
+        return;
+      }
+
       const card = event.target.closest('.search-card');
       if (!card || !hitsContainerEl?.contains(card)) return;
 
@@ -674,11 +778,36 @@ export default function App() {
       const hit = hitsById.get(card.dataset.objectId);
       if (!hit) return;
       sendHitEvent('click', hit, 'Product Card Clicked');
+      const productUrl = card.dataset.productUrl || getProductUrl(hit);
+
+      if (event.metaKey || event.ctrlKey) {
+        window.open(productUrl, '_blank', 'noreferrer');
+        return;
+      }
+
+      window.location.href = productUrl;
+    }
+
+    function handleCardKeyDown(event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+
+      const viewButton = event.target.closest('.search-card__viewProduct');
+      if (viewButton && hitsContainerEl?.contains(viewButton)) return;
+
+      const card = event.target.closest('.search-card');
+      if (!card || !hitsContainerEl?.contains(card)) return;
+
+      const hit = hitsById.get(card.dataset.objectId);
+      if (!hit) return;
+
       event.preventDefault();
-      setSelectedProduct(hit);
+      sendHitEvent('click', hit, 'Product Card Keyboard Opened');
+      const productUrl = card.dataset.productUrl || getProductUrl(hit);
+      window.location.href = productUrl;
     }
 
     hitsContainerEl?.addEventListener('click', handleCardClick);
+    hitsContainerEl?.addEventListener('keydown', handleCardKeyDown);
 
     if (configWarning) {
       const resultsContainer = document.querySelector('.search-panel__results');
@@ -695,6 +824,7 @@ export default function App() {
       searchInputEl?.removeEventListener('focus', expandSearchPanel);
       document.removeEventListener('click', collapseSearchPanelIfOutside);
       hitsContainerEl?.removeEventListener('click', handleCardClick);
+      hitsContainerEl?.removeEventListener('keydown', handleCardKeyDown);
       search.dispose();
     };
   }, []);
